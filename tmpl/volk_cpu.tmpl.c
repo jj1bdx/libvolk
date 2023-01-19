@@ -4,7 +4,7 @@
  *
  * This file is part of VOLK
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
 
 #include <volk/volk_cpu.h>
@@ -42,6 +42,10 @@ static int i_can_has_${arch.name} (void) {
         %if "neon" in arch.name:
 #if defined(CPU_FEATURES_ARCH_ARM)
     if (GetArmInfo().features.${check} == 0){ return 0; }
+#endif
+        %elif "mips" in arch.name:
+#if defined(CPU_FEATURES_ARCH_MIPS)
+    if (GetMipsInfo().features.${check} == 0){ return 0; }
 #endif
         %else:
 #if defined(CPU_FEATURES_ARCH_X86)
