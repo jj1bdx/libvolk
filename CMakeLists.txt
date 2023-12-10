@@ -1,5 +1,6 @@
 #
 # Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2023 Magnus Lundmark <magnuslundmark@gmail.com>
 #
 # This file is part of VOLK
 #
@@ -75,7 +76,7 @@ message(STATUS "Build type set to ${CMAKE_BUILD_TYPE}.")
 ########################################################################
 
 set(VERSION_INFO_MAJOR_VERSION 3)
-set(VERSION_INFO_MINOR_VERSION 0)
+set(VERSION_INFO_MINOR_VERSION 1)
 set(VERSION_INFO_MAINT_VERSION 0)
 include(VolkVersion) #setup version info
 
@@ -151,6 +152,7 @@ if (VOLK_CPU_FEATURES)
       FORCE)
     set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
     set(BUILD_SHARED_LIBS OFF)
+    set(ENABLE_INSTALL OFF)
     add_subdirectory(cpu_features)
     set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
   endif()
@@ -255,6 +257,7 @@ install(FILES
     ${CMAKE_SOURCE_DIR}/include/volk/saturation_arithmetic.h
     ${CMAKE_SOURCE_DIR}/include/volk/volk_avx_intrinsics.h
     ${CMAKE_SOURCE_DIR}/include/volk/volk_avx2_intrinsics.h
+    ${CMAKE_SOURCE_DIR}/include/volk/volk_avx2_fma_intrinsics.h
     ${CMAKE_SOURCE_DIR}/include/volk/volk_sse_intrinsics.h
     ${CMAKE_SOURCE_DIR}/include/volk/volk_sse3_intrinsics.h
     ${CMAKE_SOURCE_DIR}/include/volk/volk_neon_intrinsics.h
