@@ -212,9 +212,9 @@ check_c_source_compiles("#include <arm_neon.h>\nint main(){ uint8_t *dest; uint8
 
 if(neon_compile_result)
     set(CMAKE_REQUIRED_INCLUDES ${PROJECT_SOURCE_DIR}/include)
-    check_c_source_compiles("#include <volk/volk_common.h>\n int main(){__VOLK_ASM __VOLK_VOLATILE(\"vrev32.8 q0, q0\");}"
+    check_c_source_compiles("#include <volk/volk_common.h>\n int main(){__VOLK_ASM(\"vrev32.8 q0, q0\");}"
                             have_neonv7_result )
-    check_c_source_compiles("#include <volk/volk_common.h>\n int main(){__VOLK_ASM __VOLK_VOLATILE(\"sub v1.4s,v1.4s,v1.4s\");}"
+    check_c_source_compiles("#include <volk/volk_common.h>\n int main(){__VOLK_ASM(\"sub v1.4s,v1.4s,v1.4s\");}"
                             have_neonv8_result )
 
     if (NOT have_neonv7_result)
@@ -449,7 +449,7 @@ if(ORC_FOUND)
 
         #create a rule to generate the source and add to the list of sources
         add_custom_command(
-            COMMAND ${ORCC_EXECUTABLE} --include math.h --implementation -o ${orcc_gen} ${orc_file}
+            COMMAND ${ORCC_EXECUTABLE} --include math.h --implementation --include volk/volk_complex.h -o ${orcc_gen} ${orc_file}
             DEPENDS ${orc_file} OUTPUT ${orcc_gen}
         )
         list(APPEND volk_sources ${orcc_gen})
@@ -568,9 +568,9 @@ set_target_properties(volk PROPERTIES DEFINE_SYMBOL "volk_EXPORTS")
 #Install locations
 install(TARGETS volk
   EXPORT VOLK-export
-  LIBRARY DESTINATION lib${LIB_SUFFIX} COMPONENT "volk_runtime" # .so file
-  ARCHIVE DESTINATION lib${LIB_SUFFIX} COMPONENT "volk_devel"   # .lib file
-  RUNTIME DESTINATION bin              COMPONENT "volk_runtime" # .dll file
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT "volk_runtime" # .so file
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT "volk_devel"   # .lib file
+  RUNTIME DESTINATION bin                     COMPONENT "volk_runtime" # .dll file
   )
 
 #Configure static library
@@ -609,7 +609,7 @@ if(ENABLE_STATIC_LIBS)
 
   install(TARGETS volk_static
     EXPORT VOLK-export
-    ARCHIVE DESTINATION lib${LIB_SUFFIX} COMPONENT "volk_devel"
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT "volk_devel"
     )
 endif(ENABLE_STATIC_LIBS)
 

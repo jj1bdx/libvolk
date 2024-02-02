@@ -77,22 +77,13 @@ message(STATUS "Build type set to ${CMAKE_BUILD_TYPE}.")
 
 set(VERSION_INFO_MAJOR_VERSION 3)
 set(VERSION_INFO_MINOR_VERSION 1)
-set(VERSION_INFO_MAINT_VERSION 0)
+set(VERSION_INFO_MAINT_VERSION 1)
 include(VolkVersion) #setup version info
 
-macro(set_version_str VAR)
-  set(IN_VER ${VERSION_INFO_${VAR}_VERSION})
-  string(LENGTH "${IN_VER}" VER_LEN)
-  if(${VER_LEN} EQUAL 1)
-    set(VOLK_VERSION_${VAR} "0${IN_VER}")
-  else()
-    set(VOLK_VERSION_${VAR} "${IN_VER}")
-  endif()
-endmacro()
-
-set_version_str(MAJOR)
-set_version_str(MINOR)
-set_version_str(MAINT)
+math(EXPR VOLK_VERSION_DECIMAL
+    "${VERSION_INFO_MAJOR_VERSION} * 10000
+    + ${VERSION_INFO_MINOR_VERSION} * 100
+    + ${VERSION_INFO_MAINT_VERSION}")
 
 configure_file(
     ${CMAKE_SOURCE_DIR}/include/volk/volk_version.h.in
@@ -212,9 +203,7 @@ add_subdirectory(docs)
 ########################################################################
 # Detect /lib versus /lib64
 ########################################################################
-if (${CMAKE_INSTALL_LIBDIR} MATCHES lib64)
-    set(LIB_SUFFIX 64)
-endif()
+include(GNUInstallDirs)
 
 ########################################################################
 # Setup the package config file
@@ -222,7 +211,7 @@ endif()
 #set variables found in the pc.in file
 set(prefix ${CMAKE_INSTALL_PREFIX})
 set(exec_prefix "\${prefix}")
-set(libdir "\${exec_prefix}/lib${LIB_SUFFIX}")
+set(libdir "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
 set(includedir "\${prefix}/include")
 
 configure_file(
@@ -232,7 +221,7 @@ configure_file(
 
 install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/volk.pc
-    DESTINATION lib${LIB_SUFFIX}/pkgconfig
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     COMPONENT "volk_devel"
 )
 
@@ -240,7 +229,7 @@ install(
 # Install all headers in the include directories
 ########################################################################
 set(VOLK_RUNTIME_DIR   bin)
-set(VOLK_LIBRARY_DIR   lib${LIB_SUFFIX})
+set(VOLK_LIBRARY_DIR   ${CMAKE_INSTALL_LIBDIR})
 set(VOLK_INCLUDE_DIR   include)
 
 install(
@@ -330,7 +319,7 @@ configure_file(
 ########################################################################
 
 if(NOT CMAKE_MODULES_DIR)
-    set(CMAKE_MODULES_DIR lib${LIB_SUFFIX}/cmake)
+    set(CMAKE_MODULES_DIR ${CMAKE_INSTALL_LIBDIR}/cmake)
 endif(NOT CMAKE_MODULES_DIR)
 
 install(
