@@ -127,19 +127,32 @@ else()
     option(VOLK_CPU_FEATURES "Volk uses cpu_features" OFF)
 endif()
 
-if (VOLK_CPU_FEATURES)
-  if (VOLK_USE_OWN_CPU_FEATURES)
-    # force using libvolk's own cpu_features
-    unset(CpuFeatures_FOUND)
-    message(STATUS "Use the own cpu_features submodule")
-  else()
-    message(STATUS "Search for installed cpu_features")
+if(VOLK_CPU_FEATURES)
     find_package(CpuFeatures QUIET)
-  endif()
-  if(NOT CpuFeatures_FOUND)
-    message(STATUS "cpu_features package not found. Requiring cpu_features submodule ...")
-    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cpu_features/CMakeLists.txt" )
-      message(FATAL_ERROR "cpu_features/CMakeLists.txt not found. Did you forget to git clone recursively?\nFix with: git submodule update --init")
+    if(NOT CpuFeatures_FOUND)
+        message(
+            STATUS "cpu_features package not found. Requiring cpu_features submodule ...")
+        if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cpu_features/CMakeLists.txt")
+            message(
+                FATAL_ERROR
+                    "cpu_features/CMakeLists.txt not found. Did you forget to git clone recursively?\nFix with: git submodule update --init"
+            )
+        endif()
+        message(STATUS "Building Volk with cpu_features")
+        set(BUILD_TESTING
+            OFF
+            CACHE BOOL "Build cpu_features without tests." FORCE)
+        set(BUILD_PIC
+            ON
+            CACHE BOOL "Build cpu_features with Position Independent Code (PIC)." FORCE)
+        set(CMAKE_POSITION_INDEPENDENT_CODE
+            ON
+            CACHE BOOL "Build cpu_features with Position Independent Code (PIC)." FORCE)
+        set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
+        set(BUILD_SHARED_LIBS OFF)
+        set(ENABLE_INSTALL OFF)
+        add_subdirectory(cpu_features)
+        set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
     endif()
 else()
     message(STATUS "Building Volk without cpu_features")
