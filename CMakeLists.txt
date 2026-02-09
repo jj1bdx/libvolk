@@ -11,7 +11,7 @@
 # Project setup
 ########################################################################
 # We use `IS_64BIT now: https://cmake.org/cmake/help/latest/command/cmake_host_system_information.html
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.22)
 
 set(CMAKE_BUILD_TYPE
     ${CMAKE_BUILD_TYPE}
@@ -21,9 +21,6 @@ project(volk)
 enable_language(CXX)
 enable_language(C)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
-
 enable_testing()
 
 ########################################################################
@@ -31,17 +28,6 @@ enable_testing()
 ########################################################################
 
 # Disable complex math NaN/INFO range checking for performance
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag(-fcx-limited-range HAVE_CX_LIMITED_RANGE)
-if(HAVE_CX_LIMITED_RANGE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcx-limited-range")
-endif(HAVE_CX_LIMITED_RANGE)
-
-include(CheckCCompilerFlag)
-check_c_compiler_flag(-fcx-limited-range HAVE_C_LIMITED_RANGE)
-if(HAVE_C_LIMITED_RANGE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fcx-limited-range")
-endif(HAVE_C_LIMITED_RANGE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -62,7 +48,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
-)#location for custom "Modules"
+) #location for custom "Modules"
 
 include(VolkBuildTypes)
 #select the release build type by default to get optimization flags
@@ -81,7 +67,7 @@ message(STATUS "Build type set to ${CMAKE_BUILD_TYPE}.")
 ########################################################################
 
 set(VERSION_INFO_MAJOR_VERSION 3)
-set(VERSION_INFO_MINOR_VERSION 2)
+set(VERSION_INFO_MINOR_VERSION 3)
 set(VERSION_INFO_MAINT_VERSION 0)
 include(VolkVersion) #setup version info
 
@@ -107,7 +93,7 @@ set(CROSSCOMPILE_MULTILIB
 
 if(MSVC)
     add_definitions(-D_USE_MATH_DEFINES
-    )#enables math constants on all supported versions of MSVC
+    ) #enables math constants on all supported versions of MSVC
     add_compile_options(/W1) #reduce warnings
     add_compile_options(/wo4309)
     add_compile_options(/wd4752)
@@ -148,14 +134,47 @@ if(VOLK_CPU_FEATURES)
         set(CMAKE_POSITION_INDEPENDENT_CODE
             ON
             CACHE BOOL "Build cpu_features with Position Independent Code (PIC)." FORCE)
+        include(CheckCCompilerFlag)
+        set(CMAKE_C_FLAGS_SAVED "${CMAKE_C_FLAGS}")
+        check_c_compiler_flag(-Wno-unused-function HAVE_WNO_UNUSED_FUNCTION_CMD_LINE_ARG)
+        if(HAVE_WNO_UNUSED_FUNCTION_CMD_LINE_ARG)
+            set(CMAKE_C_FLAGS
+                "${CMAKE_C_FLAGS} -Wno-unused-function -Wno-unused-variable")
+        endif(HAVE_WNO_UNUSED_FUNCTION_CMD_LINE_ARG)
+
+        set(BUILD_SHARED_LIBS OFF)
         set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
         set(BUILD_SHARED_LIBS OFF)
         set(ENABLE_INSTALL OFF)
         add_subdirectory(cpu_features)
         set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_SAVED}")
     endif()
 else()
     message(STATUS "Building Volk without cpu_features")
+endif()
+
+# fmt - required for qa_utils table printing
+# For static builds, always use FetchContent to ensure we get a static library
+if(NOT ENABLE_STATIC_LIBS)
+    find_package(fmt QUIET)
+endif()
+if(NOT fmt_FOUND)
+    if(ENABLE_STATIC_LIBS)
+        message(STATUS "Static build: using FetchContent to build fmt as static library ...")
+    else()
+        message(STATUS "fmt package not found. Using FetchContent to download ...")
+    endif()
+    include(FetchContent)
+    FetchContent_Declare(
+        fmt
+        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+        GIT_TAG 10.2.1
+        GIT_SHALLOW TRUE)
+    set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(fmt)
+    set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
 endif()
 
 # Python
@@ -172,12 +191,6 @@ endif()
 if(NOT MAKO_FOUND)
     message(FATAL_ERROR "Mako templates required to build VOLK")
 endif()
-
-# Check if we have std::filesystem
-find_package(
-    FILESYSTEM
-    COMPONENTS Final Experimental
-    REQUIRED)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -249,6 +262,7 @@ install(
           ${CMAKE_CURRENT_SOURCE_DIR}/include/volk/volk_avx_intrinsics.h
           ${CMAKE_CURRENT_SOURCE_DIR}/include/volk/volk_avx2_intrinsics.h
           ${CMAKE_CURRENT_SOURCE_DIR}/include/volk/volk_avx2_fma_intrinsics.h
+          ${CMAKE_CURRENT_SOURCE_DIR}/include/volk/volk_avx512_intrinsics.h
           ${CMAKE_CURRENT_SOURCE_DIR}/include/volk/volk_sse_intrinsics.h
           ${CMAKE_CURRENT_SOURCE_DIR}/include/volk/volk_sse3_intrinsics.h
           ${CMAKE_CURRENT_SOURCE_DIR}/include/volk/volk_neon_intrinsics.h
